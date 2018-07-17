@@ -1,84 +1,85 @@
 package model;
 
-import model.gamefigure.GameObject;
-import controller.Main;
-import view.GamePanel;
-import java.awt.Color;
+import model.gameobject.GameObject;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import model.gamefigure.actors.Actor;
-import model.gamefigure.actors.obstacles.Obstacle;
+import model.gameobject.actors.player.Player;
 import model.level.Level;
 
 public class GameData {
 
-    public final List<Actor> enemyFigures;
-    public final List<Actor> friendFigures;
-    public final List<Obstacle> obstacles;
+    public final List<GameObject> renderObjects = new CopyOnWriteArrayList<>();
+    public final List<Collideable> friendColliders = new CopyOnWriteArrayList<>();
+    public final List<Collideable> enemyColliders = new CopyOnWriteArrayList<>();
+    public final List<Collideable> obstacleColliders = new CopyOnWriteArrayList<>();
     public BufferedImage backgroundImage;
     private Level currentLevel;
-    private GameObject player;
+    private Player player;
 
     public GameData() {
-        enemyFigures = new CopyOnWriteArrayList<>();
-        friendFigures = new CopyOnWriteArrayList<>();
-        obstacles = new CopyOnWriteArrayList<>();
-
-        // GamePanel.width, height are known when rendered. 
-        // Thus, at this moment,
-        // we cannot use GamePanel.width and height.
-        //shooter = new Shooter(Main.WIN_WIDTH / 2, Main.WIN_HEIGHT - 80);
+        
     }
 
     public void update() {
-        for(Actor actor : friendFigures){
+        System.out.println("Number Of Enemies: " + Level.numberOfEnemies);
+        for (GameObject actor : renderObjects) {
             actor.update();
         }
         
-        /*for(Actor actor : obstacles){
-            actor.update();
-        }*/
-        
-        for(Actor actor : enemyFigures){
-            actor.update();
+        if (Level.numberOfEnemies == 0){
+            currentLevel.nextLevel();
         }
-    }
-    
-    public Level getCurrentLevel(){
+    }        
+
+    public Level getCurrentLevel() {
         return currentLevel;
     }
-    
-    public void clearGameFigures(){
-        enemyFigures.clear();
-        friendFigures.clear();
-        obstacles.clear();
+
+    public void clearGameFigures() {
+        renderObjects.remove(player);
+        currentLevel.clearLevelFigures();
+        renderObjects.clear();
+        friendColliders.clear();
+        enemyColliders.clear();
+        obstacleColliders.clear();
     }
-    
-    public void clearBackground(){
+
+    public void clearBackground() {
         backgroundImage = null;
     }
-    
-    public void setCurrentLevel(Level level){
+
+    public void setCurrentLevel(Level level) {
+        if(currentLevel != null){
+            clearGameFigures();
+            System.out.println("clearing game figs");
+        }
         this.currentLevel = level;
-        clearGameFigures();
-        clearBackground();
-        
-        player = level.getFriendFigures().get(0);
+        level.initialize();
         backgroundImage = level.getImage();
-        for(GameObject gameFigure : level.getFriendFigures()){
-            friendFigures.add((Actor)gameFigure);
+        //gameObjects.add(player);
+        for (GameObject gameFigure : level.getLevelObjects()) {
+            renderObjects.add(gameFigure);
+            if(gameFigure instanceof Player){
+                System.out.println("Adding player");
+            }
         }
-        for(GameObject gameFigure : level.getEnemyFigures()){
-            enemyFigures.add((Actor)gameFigure);
+        for (Collideable gameFigure : level.getFriendCollideables()) {
+            friendColliders.add((Collideable) gameFigure);
         }
-        for(GameObject gameFigure : level.getEnemyFigures()){
-            enemyFigures.add((Obstacle)gameFigure);
+        for (Collideable gameFigure : level.getEnemyCollideables()) {
+            enemyColliders.add((Collideable) gameFigure);
+        }
+        for (Collideable gameFigure : level.getObstacleCollideables()) {
+            obstacleColliders.add((Collideable) gameFigure);
         }
     }
-    
-    public GameObject getPlayer(){
+
+    public Player getPlayer() {
         return player;
+    }
+
+    public void setPlayer(Player player) {
+        this.player = player;
     }
 }
